@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  password        String?   // Nullable for social login users
+  name            String
+  role            UserRole  @default(USER)
+  socialProvider  String?   // 'google', 'facebook', or null
+  socialId        String?   // Social provider user ID
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  createdForms    Form[]
+  formResponses   FormResponse[]
+  passwordResets  PasswordResetToken[]
+
+  @@map("users")
+}
+
+model Form {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  fields      Json      // Array of form fields
+  isActive    Boolean   @default(true)
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  creator     User           @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  responses   FormResponse[]
+
+  @@map("forms")
+}
+
+model FormResponse {
+  id         String   @id @default(cuid())
+  formId     String
+  userId     String
+  data       Json     // Response data
+  submittedAt DateTime @default(now())
+
+  // Relations
+  form       Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Unique constraint: one response per user per form
+  @@unique([formId, userId])
+  @@map("form_responses")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
