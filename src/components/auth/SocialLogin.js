@@ -9,7 +9,7 @@ const SocialLogin = () => {
     
     try {
       // Use real OAuth endpoints
-      const oauthUrl = `http://localhost:5000/auth/${provider}`;
+      const oauthUrl = `https://consulta-publica-2f0cb893919c.herokuapp.com/auth/${provider}`;
       window.location.href = oauthUrl;
     } catch (error) {
       console.error('Erro de login social:', error);
